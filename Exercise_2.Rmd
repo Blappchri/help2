@@ -1,0 +1,68 @@
+---
+title: "Homework2_CBlapp"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Data and package setup.
+```{r bla}
+setwd("C:/Users/chris/Desktop")
+anno = read.table("SampleAnnotation.txt", as.is=TRUE, sep="\t", quote="",
+                  row.names=1, header=TRUE)
+x = read.table("expressiondata.txt", as.is=TRUE, sep="\t", quote="", row.names=1, header=TRUE, check.names = FALSE)
+x = as.matrix(x)
+samples = rownames(anno)
+colors = rainbow(nrow(anno))
+isNorm = anno$TissueType == "norm"
+isSick = anno$TissueType == "sick"
+isAcute = anno$TissueType == "acute"
+library(limma)
+```
+
+###The plots without comment.(As requested in Slack)
+
+##Boxplots
+```{r bla2}
+boxplot(x)
+boxplot(log(x))
+```
+##Densities
+```{r bla3}
+limma::plotDensities(log(x),legend="topright")
+x2<-limma::normalizeQuantiles(x)
+```
+###cluster and choosing the top 500 in terms of variance
+```{r bla4}
+plot(hclust(dist(t(x2))))
+xvar<-apply(x2, 1, var)
+xvar=sort(xvar,decreasing = TRUE)
+xvar=xvar[1:500]
+x500<-x2[names(xvar),]
+```
+###Heatmaps
+```{r bla5}
+library(pheatmap)
+pheatmap(x500)
+xcor<-cor(x2)
+rownames(xcor)<-samples
+colnames(xcor)<-samples
+```
+###Correlation image
+```{r bla6}
+image(xcor,axes=FALSE)
+axis(1,at=seq(0,1,length.out = 17),labels=samples)
+axis(2,at=seq(0,1,length.out = 17),labels=samples)
+#Gives a complaint about a lack of allocation space if I use the entire set
+```
+###Principal feature methods
+```{r bla344}
+plot(cmdscale(dist(x500)))
+p<-prcomp(t(x2))
+plot(p)
+biplot(p,arrow.len=0,var.axes=FALSE)
+plot(p$x[,1],p$x[,2])
+text(p$x[,1],p$x[,2],labels=rownames(p$x))
+```
